@@ -29,3 +29,5 @@
   > > > - https://joel-costigliola.github.io/assertj/index.html   
   > >
   > > - spring-test: 스프링 통합 테스트 지원
+
+- 순수 JPA
