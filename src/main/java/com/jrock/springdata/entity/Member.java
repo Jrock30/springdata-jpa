@@ -9,6 +9,11 @@ import javax.persistence.*;
 @Setter // 세터는 안쓰는 것이 좋음
 @NoArgsConstructor(access = AccessLevel.PROTECTED) // 기본 생성자를 protected로 생성
 @ToString(of = {"id", "username", "age"}) // @ToString은 가급적 내부 필드만(연관관계 없는 필드만, team 같은), 이렇게 하면 {} 안의 필드로 ToString 생성
+// 스프링 데이터 JPA를 사용하면 실무에서 Named Query를 직접 등록해서 사용하는 일은 드물다. 대신 @Query 를 사용해서 리파지토리 메소드에 쿼리를 직접 정의한다.
+@NamedQuery(
+        name="Member.findByUsername",
+        query="select m from Member m where m.username = :username"
+)
 public class Member {
 
     @Id @GeneratedValue
