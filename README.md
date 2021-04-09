@@ -31,3 +31,6 @@
   > > - spring-test: 스프링 통합 테스트 지원
 
 - 순수 JPA
+- Spring Data JPA
+  - 공통 인터페이스
+>  
