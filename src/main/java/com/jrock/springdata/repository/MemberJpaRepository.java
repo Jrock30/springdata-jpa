@@ -1,6 +1,8 @@
 package com.jrock.springdata.repository;
 
 import com.jrock.springdata.entity.Member;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import javax.persistence.EntityManager;
