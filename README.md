@@ -38,5 +38,8 @@
 스프링 데이터 JPA 공식 문서 참고:   
 > https://docs.spring.io/spring-data/jpa/docs/current/ reference/html/#jpa.query-methods.query-creation  
 > https://docs.spring.io/spring-data/jpa/docs/current/reference/html/#repositories.limit-query-result
-  - @NamedQuery (JPA NameQuery, 실무X)
-  - @Query (리포지토리 메소드에 쿼리 정의, 실무O)
+  - 쿼리 메소드
+    - @NamedQuery (JPA NameQuery, 실무X)
+    - @Query (리포지토리 메소드에 쿼리 정의, 실무O)
+    - 컬렉션 파라미터 바인딩
+    - 반환타입
