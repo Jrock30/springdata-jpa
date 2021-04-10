@@ -2,6 +2,9 @@ package com.jrock.springdata.repository;
 
 import com.jrock.springdata.dto.MemberDto;
 import com.jrock.springdata.entity.Member;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Slice;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -41,4 +44,12 @@ public interface MemberRepository extends JpaRepository<Member, Long> { // Entit
     Member findMemberByUsername(String name);
     // 반환타입 Optional
     Optional<Member> findOptionalByUsername(String name);
+
+    // 카운터 쿼리 분리
+    @Query(value = "select m from Member m left join m.team t",
+            countQuery = "select count(m) from Member m")
+    Page<Member> findByAge(int age, Pageable pageable);
+//    Page<Member> findByAge(int age, Pageable pageable);
+//    Slice<Member> findByAge(int age, Pageable pageable);
+//    List<Member> findByAge(int age, Pageable pageable);
 }

@@ -7,6 +7,10 @@ import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Slice;
+import org.springframework.data.domain.Sort;
 import org.springframework.test.annotation.Rollback;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -160,5 +164,46 @@ public class MemberRepositoryTest {
         memberRepository.save(m2);
 
         List<Member> aaa = memberRepository.findListByUsername("AAA");
+    }
+
+    @Test
+    public void paging() throws Exception {
+        // given
+        memberRepository.save(new Member("member1", 10));
+        memberRepository.save(new Member("member2", 10));
+        memberRepository.save(new Member("member3", 10));
+        memberRepository.save(new Member("member4", 10));
+        memberRepository.save(new Member("member5", 10));
+
+        int age = 10;
+        // 0페이지 부터, 3페이지 까지, 정렬 방법
+        // 주의: Page는 1부터 시작이 아니라 0부터 시작이다.
+        PageRequest pageRequest = PageRequest.of(0, 3, Sort.by(Sort.Direction.DESC, "username"));
+
+        //when
+        // total count 쿼리까지 같이 날림.(페이징)
+        Page<Member> page = memberRepository.findByAge(age, pageRequest);
+
+        // Entity로 반환하면 안 되기 때문에 .map 메서드를 활용하여 DTO로 변경
+        Page<MemberDto> toMap = page.map(member -> new MemberDto(member.getId(), member.getUsername(), null));
+
+        // slice 는 전체 카운트를 가져오지 않는다. limit 가 + 1 되어 쿼리가 날라감. (페이징이 아니고 더보기 형태의)
+//        Slice<Member> page = memberRepository.findByAge(age, pageRequest);
+
+        // 바로 List로 받아도 된다.
+//        List<Member> page = memberRepository.findByAge(age, pageRequest);
+
+        //then
+        List<Member> content = page.getContent(); // 조회된 데이터
+        // total count
+        long totalElements = page.getTotalElements();
+
+        assertThat(content.size()).isEqualTo(3); // 조회된 데이터
+        assertThat(page.getTotalElements()).isEqualTo(5);   // 전체 데이터 수
+        assertThat(page.getTotalPages()).isEqualTo(2);  // 페이지 번호
+        assertThat(page.isFirst()).isTrue(); // 첫번째 항목인가?
+        assertThat(page.hasNext()).isTrue(); // 다음 페이지가 있는가?
+
+
     }
 }

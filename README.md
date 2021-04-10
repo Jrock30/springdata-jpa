@@ -42,4 +42,8 @@
     - @NamedQuery (JPA NameQuery, 실무X)
     - @Query (리포지토리 메소드에 쿼리 정의, 실무O)
     - 컬렉션 파라미터 바인딩
-    - 반환타입
+    - 반환타입   
+  - 페이징
+    * 순수 JPA 페이징 정렬
+    * Spring Data JPA 페이징 정렬
+      * Page, Slice
