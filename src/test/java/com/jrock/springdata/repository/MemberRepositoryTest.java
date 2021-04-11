@@ -7,10 +7,7 @@ import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Slice;
-import org.springframework.data.domain.Sort;
+import org.springframework.data.domain.*;
 import org.springframework.test.annotation.Rollback;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -318,10 +315,126 @@ public class MemberRepositoryTest {
 
     @Test
     public void callCustom() throws Exception {
-        //given
         List<Member> result = memberRepository.findMemberCustom();
+    }
+
+    /**
+     * 장점
+     * 동적 쿼리를 편리하게 처리
+     * 도메인 객체를 그대로 사용
+     * 데이터 저장소를 RDB에서 NOSQL로 변경해도 코드 변경이 없게 추상화 되어 있음 스프링 데이터 JPA JpaRepository 인터페이스에 이미 포함
+     * 단점
+     * 조인은 가능하지만 내부 조인(INNER JOIN)만 가능함 외부 조인(LEFT JOIN) 안됨
+     * 다음과 같은 중첩 제약조건 안됨 firstname = ?0 or (firstname = ?1 and lastname = ?2)
+     * 매칭 조건이 매우 단순함
+     * 문자는 starts/contains/ends/regex 다른 속성은 정확한매칭( = )만지원
+     * 정리
+     * 실무에서 사용하기에는 매칭 조건이 너무 단순하고, LEFT 조인이 안됨 실무에서는 QueryDSL을 사용하자
+     * @throws Exception
+     */
+    @Test
+    public void QueryByExampleTest() throws Exception {
+        //given
+        Team teamA = new Team("teamA");
+        em.persist(teamA);
+        em.persist(new Member("m1", 0, teamA));
+        em.persist(new Member("m2", 0, teamA));
+        em.flush();
+
         //when
+        // Probe 생성
+        Member member = new Member("m1");
+        Team team = new Team("teamA"); //내부조인으로 teamA 가능
+        member.setTeam(team);
+
+        //ExampleMatcher 생성, age 프로퍼티는 무시
+        ExampleMatcher matcher = ExampleMatcher.matching().withIgnorePaths("age");
+        Example<Member> example = Example.of(member, matcher);
+        List<Member> result = memberRepository.findAll(example);
 
         //then
+        assertThat(result.size()).isEqualTo(1);
+    }
+
+    /**
+     * 조회할 엔티티의 필드를 getter 형식으로 지정하면 해당 필드만 선택해서 조회(Projection)
+     *
+     * 주의
+     *   - 프로젝션 대상이 root 엔티티면, JPQL SELECT 절 최적화 가능 프로젝션 대상이 ROOT가 아니면
+     *   - LEFT OUTER JOIN 처리
+     *   - 모든 필드를 SELECT해서 엔티티로 조회한 다음에 계산
+     *
+     * 정리
+     *   - 프로젝션 대상이 root 엔티티면 유용하다.
+     *   - 프로젝션 대상이 root 엔티티를 넘어가면 JPQL SELECT 최적화가 안된다! 실무의 복잡한 쿼리를 해결하기에는 한계가 있다.
+     *   - 실무에서는 단순할 때만 사용하고, 조금만 복잡해지면 QueryDSL을 사용하자
+     */
+    @Test
+    public void projections() throws Exception {
+        //given
+        Team teamA = new Team("teamA");
+        em.persist(teamA);
+        Member m1 = new Member("m1", 0, teamA);
+        Member m2 = new Member("m2", 0, teamA);
+        em.persist(m1);
+        em.persist(m2);
+        em.flush();
+        em.clear();
+
+        //when
+//        List<UsernameOnly> result = memberRepository.findProjectionsByUsername("m1");
+//        List<UserNameOnlyDto> result = memberRepository.findProjectionsByUsername("m1");
+//        List<UserNameOnlyDto> result = memberRepository.findProjectionsByUsername("m1", UserNameOnlyDto.class);
+        List<NestedClosedProjections> result = memberRepository.findProjectionsByUsername("m1", NestedClosedProjections.class);
+
+//        for (UsernameOnly usernameOnly : result) {
+        for (NestedClosedProjections nestedClosedProjections : result) {
+            String username = nestedClosedProjections.getUsername();
+            System.out.println("username = " + username);
+            String teamName = nestedClosedProjections.getTeam().getName();
+            System.out.println("teamName = " + teamName);
+        }
+
+        //then
+        Assertions.assertThat(result.size()).isEqualTo(1);
+    }
+
+    /**
+     * 네이티브 쿼리
+     *   - 가급적 네이티브 쿼리는 사용하지 않는게 좋음, 정말 어쩔 수 없을 때 사용 최근에 나온 궁극의 방법 스프링 데이터 Projections 활용
+     * 스프링 데이터 JPA 기반 네이티브 쿼리 페이징 지원
+     *
+     * 반환 타입
+     *   - Object[], Tuple, DTO(스프링 데이터 인터페이스 Projections 지원)
+     *
+     * 제약
+     *   - Sort 파라미터를 통한 정렬이 정상 동작하지 않을 수 있음(믿지 말고 직접 처리)
+     *   - JPQL처럼 애플리케이션 로딩 시점에 문법 확인 불가
+     *   - 동적 쿼리 불가
+     *
+     * 네이티브 SQL을 DTO로 조회할 때는 JdbcTemplate or myBatis 권장
+     */
+    @Test
+    public void nativeQuery() throws Exception {
+        //given
+        Team teamA = new Team("teamA");
+        em.persist(teamA);
+
+        Member m1 = new Member("m1", 0, teamA);
+        Member m2 = new Member("m2", 0, teamA);
+        em.persist(m1);
+        em.persist(m2);
+
+        em.flush();
+        em.clear();
+
+        //when
+//        Member result = memberRepository.findByNativeQuery("m1");
+        Page<MemberProjection> result = memberRepository.findByNativeProjection(PageRequest.of(0, 10));
+        List<MemberProjection> content = result.getContent();
+        for (MemberProjection memberProjection : content) {
+            System.out.println("memberProjection = " + memberProjection.getUsername());
+            System.out.println("memberProjection = " + memberProjection.getTeamName());
+        }
     }
 }
