@@ -51,3 +51,4 @@
   - JPA Hint & Lock
   - 확장기능
     - 사용자 정의 Repository 구현
+  - Auditing
