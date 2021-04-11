@@ -15,7 +15,7 @@ import java.util.List;
 import java.util.Optional;
 
 // @Repository 애노테이션 생략 가능
-public interface MemberRepository extends JpaRepository<Member, Long> { // Entity Type, PK Type
+public interface MemberRepository extends JpaRepository<Member, Long>, MemberRepositoryCustom { // Entity Type, PK Type
 
     List<Member> findByUsernameAndAgeGreaterThan(String username, int age);
 

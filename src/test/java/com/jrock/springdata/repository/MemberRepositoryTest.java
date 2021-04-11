@@ -36,6 +36,10 @@ public class MemberRepositoryTest {
     @PersistenceContext
     EntityManager em;
 
+    // 이런식으로 따로 Repository 분리해서 사용해도 된다.
+    @Autowired
+    MemberQueryRepository memberQueryRepository;
+
     @Test
     public void testMember() throws Exception {
         //given
@@ -310,5 +314,14 @@ public class MemberRepositoryTest {
 
         //when
         List<Member> result = memberRepository.findLockByUsername("member1");
+    }
+
+    @Test
+    public void callCustom() throws Exception {
+        //given
+        List<Member> result = memberRepository.findMemberCustom();
+        //when
+
+        //then
     }
 }
