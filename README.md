@@ -47,3 +47,4 @@
     * 순수 JPA 페이징 정렬
     * Spring Data JPA 페이징 정렬
       * Page, Slice
+  - @EntityGraph
