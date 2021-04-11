@@ -5,12 +5,11 @@ import com.jrock.springdata.entity.Member;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
-import org.springframework.data.jpa.repository.EntityGraph;
-import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Modifying;
-import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.jpa.repository.*;
 import org.springframework.data.repository.query.Param;
 
+import javax.persistence.LockModeType;
+import javax.persistence.QueryHint;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
@@ -100,4 +99,14 @@ public interface MemberRepository extends JpaRepository<Member, Long> { // Entit
     // NamedEntityGraph 사용 방법
     @EntityGraph("Member.all")
     List<Member> findEntityGraphNamedByUsername(String username);
+
+    // 쿼리힌트 (스냅샷을 만들지 않아서 변경감지 체크를 하지 않는다.)
+    // JPA 쿼리 힌트(SQL 힌트가 아니라 JPA 구현체에게 제공하는 힌트)
+    @QueryHints(value = @QueryHint(name = "org.hibernate.readOnly", value = "true"))
+    Member findReadOnlyByUsername(String username);
+
+    // select for update
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    List<Member> findLockByUsername(String username);
+
 }

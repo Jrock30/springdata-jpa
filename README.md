@@ -48,3 +48,4 @@
     * Spring Data JPA 페이징 정렬
       * Page, Slice
   - @EntityGraph
+  - JPA Hint & Lock
