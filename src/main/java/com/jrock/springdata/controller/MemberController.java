@@ -1,13 +1,18 @@
 package com.jrock.springdata.controller;
 
+import com.jrock.springdata.dto.MemberDto;
 import com.jrock.springdata.entity.Member;
 import com.jrock.springdata.repository.MemberRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.annotation.PostConstruct;
+import java.util.Optional;
 
 @RestController
 @RequiredArgsConstructor
@@ -34,8 +39,38 @@ public class MemberController {
         return member.getUsername();
     }
 
+    /**
+     * 요청 파라미터
+     * 예) /members?page=0&size=3&sort=id,desc&sort=username,desc
+     * page: 현재 페이지, 0부터 시작한다.
+     * size: 한 페이지에 노출할 데이터 건수
+     * sort: 정렬 조건을 정의한다. 예) 정렬 속성,정렬 속성...(ASC | DESC), 정렬 방향을 변경하고 싶으면 sort
+     * 파라미터 추가 ( asc 생략 가능)
+     *
+     * 접두사
+     *   페이징 정보가 둘 이상이면 접두사로 구분
+     *   @Qualifier 에 접두사명 추가 "{접두사명}_xxx”
+     *   예제: /members?member_page=0&order_page=1
+     *    public String list(
+     *       @Qualifier("member") Pageable memberPageable,
+     *       @Qualifier("order") Pageable orderPageable, ...
+     */
+    @GetMapping("/members")
+//    public Page<Member> list(Pageable pageable) {
+    public Page<MemberDto> list(@PageableDefault(size = 5, sort = "username") Pageable pageable) { // 페이지 default 설정(글로벌 보다 우선순위)
+        Page<Member> page = memberRepository.findAll(pageable);
+
+        // Entity -> DTO
+//        Page<MemberDto> map = page.map(member -> new MemberDto(member.getId(), member.getUsername(), null));
+//        Page<MemberDto> map = page.map(member -> new MemberDto(member);
+        Page<MemberDto> map = page.map(MemberDto::new);
+        return map;
+    }
+
     @PostConstruct
     public void init() {
-        memberRepository.save(new Member("userA"));
+        for (int i = 0; i < 100; i++) {
+            memberRepository.save(new Member("userA" + i, i));
+        }
     }
 }
